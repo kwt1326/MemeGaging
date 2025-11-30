@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Creator {
+  id           String   @id @default(cuid())
+  handle       String   @unique
+  displayName  String
+  avatarUrl    String?
+  memeScore    Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tipsReceived Tip[]    @relation("CreatorTipsReceived")
+  tipsSent     Tip[]    @relation("CreatorTipsSent")
+}
+
+model Tip {
+  id             String   @id @default(cuid())
+  fromCreatorId  String?
+  toCreatorId    String
+  tokenAddress   String
+  amount         String   // on-chain amount (string)
+  txHash         String
+  createdAt      DateTime @default(now())
+
+  fromCreator Creator? @relation("CreatorTipsSent", fields: [fromCreatorId], references: [id])
+  toCreator   Creator  @relation("CreatorTipsReceived", fields: [toCreatorId], references: [id])
+}
