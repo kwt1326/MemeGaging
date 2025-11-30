@@ -14,26 +14,31 @@ datasource db {
 }
 
 model creator {
-  id           String   @id @default(cuid())
-  handle       String   @unique
-  display_name String
-  avatar_url   String?
-  meme_score   Float    @default(0)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  memex_user_id  Int      @unique        // mock-user-data 의 id
+  user_name      String                  // "zIfjpicANr"
+  display_name   String                  // "Vesta.Crona"
+  user_name_tag  String?                 // "e93cD9" (null 가능)
+  wallet_address String                  // "0x26A9..."
+  access_token   String                  // MemeX API 호출용
 
-  tips_received tip[] @relation("creator_tips_received")
-  tips_sent     tip[] @relation("creator_tips_sent")
+  meme_score     Float    @default(0)    // 최근 7일 계산한 MemeScore
+
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  tips_received  tip[]    @relation("creator_tips_received")
+  tips_sent      tip[]    @relation("creator_tips_sent")
 }
 
 model tip {
-  id               String   @id @default(cuid())
-  from_creator_id  String?
-  to_creator_id    String
-  token_address    String
-  amount           String   // on-chain amount (string)
-  tx_hash          String
-  created_at       DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  from_creator_id Int?
+  to_creator_id   Int
+  token_address   String                     // 크리에이터 토큰 주소
+  amount          Decimal @db.Decimal(78, 0) // on-chain amount (wei 등)
+  tx_hash         String  @unique
+  created_at      DateTime @default(now())
 
   from_creator creator? @relation("creator_tips_sent", fields: [from_creator_id], references: [id])
   to_creator   creator  @relation("creator_tips_received", fields: [to_creator_id], references: [id])
