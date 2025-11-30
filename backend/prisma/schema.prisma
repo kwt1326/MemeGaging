@@ -13,28 +13,28 @@ datasource db {
   provider = "postgresql"
 }
 
-model Creator {
+model creator {
   id           String   @id @default(cuid())
   handle       String   @unique
-  displayName  String
-  avatarUrl    String?
-  memeScore    Float    @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  display_name String
+  avatar_url   String?
+  meme_score   Float    @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
-  tipsReceived Tip[]    @relation("CreatorTipsReceived")
-  tipsSent     Tip[]    @relation("CreatorTipsSent")
+  tips_received tip[] @relation("creator_tips_received")
+  tips_sent     tip[] @relation("creator_tips_sent")
 }
 
-model Tip {
-  id             String   @id @default(cuid())
-  fromCreatorId  String?
-  toCreatorId    String
-  tokenAddress   String
-  amount         String   // on-chain amount (string)
-  txHash         String
-  createdAt      DateTime @default(now())
+model tip {
+  id               String   @id @default(cuid())
+  from_creator_id  String?
+  to_creator_id    String
+  token_address    String
+  amount           String   // on-chain amount (string)
+  tx_hash          String
+  created_at       DateTime @default(now())
 
-  fromCreator Creator? @relation("CreatorTipsSent", fields: [fromCreatorId], references: [id])
-  toCreator   Creator  @relation("CreatorTipsReceived", fields: [toCreatorId], references: [id])
+  from_creator creator? @relation("creator_tips_sent", fields: [from_creator_id], references: [id])
+  to_creator   creator  @relation("creator_tips_received", fields: [to_creator_id], references: [id])
 }
