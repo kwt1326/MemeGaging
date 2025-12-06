@@ -28,7 +28,7 @@ tipRouter.post("/notify", async (req, res) => {
       tx_hash,
     } = req.body as {
       to_creator_id: number;
-      from_creator_id?: number;
+      from_creator_id: number;
       token_address: string;
       amount: string;
       tx_hash: string;
@@ -42,7 +42,7 @@ tipRouter.post("/notify", async (req, res) => {
     const tip = await prisma.tip.create({
       data: {
         to_creator_id,
-        from_creator_id: from_creator_id ?? null,
+        from_creator_id,
         token_address,
         amount,
         tx_hash,

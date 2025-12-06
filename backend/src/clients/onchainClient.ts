@@ -8,8 +8,8 @@ const abi = parseAbi([
 ]);
 
 const chain = {
-  id: 9999, // TODO: Formicarium/memecorechain 체인 ID 로 교체
-  name: "Formicarium",
+  id: 43522,
+  name: 'Insectarium',
   nativeCurrency: { name: "M", symbol: "M", decimals: 18 },
   rpcUrls: { default: { http: [RPC_URL] } },
 } as const;
@@ -49,6 +49,6 @@ export async function allowTokenIfNeeded(tokenAddress: `0x${string}`) {
   });
 
   // 필요하면 여기서 트랜잭션 mined 까지 기다리기
-  // const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
   console.log("setAllowedToken tx sent:", hash);
 }

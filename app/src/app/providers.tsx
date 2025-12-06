@@ -5,6 +5,7 @@ import { type ReactNode, useState } from 'react'
 import { type State, WagmiProvider } from 'wagmi'
 
 import { getConfig } from '@/wagmi'
+import { AutoInjectedConnect } from '@/components/wagmi/AutoInjectedConnect'
 
 export function Providers(props: {
   children: ReactNode
@@ -14,8 +15,13 @@ export function Providers(props: {
   const [queryClient] = useState(() => new QueryClient())
 
   return (
-    <WagmiProvider config={config} initialState={props.initialState}>
+    <WagmiProvider
+      config={config}
+      reconnectOnMount={true}
+      initialState={props.initialState}
+    >
       <QueryClientProvider client={queryClient}>
+        <AutoInjectedConnect />
         {props.children}
       </QueryClientProvider>
     </WagmiProvider>

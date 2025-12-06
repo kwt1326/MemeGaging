@@ -1,12 +1,41 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchDashboard } from "@/lib/api";
+
+import DashboardView from "./DashboardView";
+
 export default function DashboardPage() {
+  const [creatorIdInput, setCreatorIdInput] = useState("");
+
+  const creatorId = Number(creatorIdInput);
+  const isValidId = !Number.isNaN(creatorId) && creatorId > 0;
+
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["dashboard", creatorId],
+    queryFn: () => fetchDashboard(creatorId),
+    enabled: false, // 버튼 클릭 시에만
+  });
+
+  const handleLoad = () => {
+    if (!isValidId) return;
+    refetch();
+  };
+
   return (
-    <main className="p-8 space-y-4">
-      <h1 className="text-2xl font-bold mb-4">내 대시보드</h1>
-      {/* TODO: 내 지갑 / MemeX 계정 기준으로
-          - 내가 Tip한 크리에이터
-          - 내가 기여한 점수
-          를 backend /me/dashboard 에서 받아와 렌더링 */}
-      <p>내가 Tip한 크리에이터와 내가 기여한 총 MemeScore를 보여줍니다.</p>
-    </main>
+    <DashboardView
+      creatorIdInput={creatorIdInput}
+      onCreatorIdChange={setCreatorIdInput}
+      loading={isLoading}
+      error={error ? (error as Error).message : null}
+      data={data ?? null}
+      onLoadDashboard={handleLoad}
+    />
   );
 }

@@ -1,7 +1,48 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
+import { fetchMyInfo } from "../clients/memexClient";
 
 export const creatorRouter = Router();
+
+creatorRouter.get("/from-address/:address", async (req, res) => {
+  try {
+    const address = String(req.params.address);
+    if (!address) {
+      return res.status(400).json({ error: "invalid_id" });
+    }
+
+    const creator = await prisma.creator.findFirst({
+      where: {
+        wallet_address: {
+          equals: address,
+          mode: "insensitive",
+        },
+      },
+    });
+
+    if (!creator) {
+      return res.status(404).json({ error: "not_found" });
+    }
+
+    const myInfo = await fetchMyInfo(creator.access_token);
+    const tokenAddress: string | undefined = myInfo.tokenAddress;
+
+    if (!tokenAddress) {
+      console.error("MemeX user info has no tokenAddress", myInfo);
+      return res.status(500).json({ error: "no_token_address_from_memex" });
+    }
+
+    res.json({
+      ok: true,
+      creator_id: creator.id,
+      token_address: tokenAddress, // 프론트에서 바로 사용 가능
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "internal_error" });
+  }
+});
+
 
 /**
  * GET /creators/search?q=...
