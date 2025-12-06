@@ -32,7 +32,7 @@ export async function fetchRanking(limit = 100) {
     `${API_BASE}/creators/ranking/top?limit=${limit}`,
     { next: { revalidate: 10 } }
   );
-  return handle<{ creators: any[] }>(res);
+  return handle<{ creators: Creators }>(res);
 }
 
 export async function fetchDashboard(creatorId: number) {

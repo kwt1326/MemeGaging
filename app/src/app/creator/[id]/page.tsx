@@ -8,7 +8,7 @@ import { parseUnits } from "viem";
 import { fetchCreatorDetail, notifyTip, fetchCreatorDetailByAddress } from "@/lib/api";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 
-import CreatorDetailView from "./CreatorDetailView";
+import { CreatorDetailView } from "./CreatorDetailView";
 import { useQueryEffects } from "@/hooks/useQueryEffects";
 
 const LOGGER_ADDRESS =
@@ -119,6 +119,7 @@ export default function CreatorDetailPage() {
   });
 
   console.log("test")
+  
   return (
     <CreatorDetailView
       loading={isLoading}

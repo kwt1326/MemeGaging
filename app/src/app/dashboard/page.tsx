@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboard } from "@/lib/api";
-
-import DashboardView from "./DashboardView";
+import { DashboardView } from "./DashboardView";
 
 export default function DashboardPage() {
   const [creatorIdInput, setCreatorIdInput] = useState("");

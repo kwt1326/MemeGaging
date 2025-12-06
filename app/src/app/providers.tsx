@@ -6,6 +6,7 @@ import { type State, WagmiProvider } from 'wagmi'
 
 import { getConfig } from '@/wagmi'
 import { AutoInjectedConnect } from '@/components/wagmi/AutoInjectedConnect'
+import { Header } from '@/components/Header'
 
 export function Providers(props: {
   children: ReactNode

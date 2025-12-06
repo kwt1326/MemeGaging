@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { WalletConnector } from "@/components/wagmi/WalletConnector";
+import { useState } from 'react';
+import { StatCard } from '../../../components/StatCard';
+import { UserAvatar } from '../../../components/UserAvatar';
+import { creatorTipsData } from '../../../data/mockData';
 
 type CreatorDetailViewProps = {
   loading: boolean;
@@ -17,7 +17,7 @@ type CreatorDetailViewProps = {
   tipPending: boolean;
 };
 
-export default function CreatorDetailView({
+export function CreatorDetailView({
   loading,
   creator,
   stats,
@@ -27,109 +27,223 @@ export default function CreatorDetailView({
   onTip,
   tipPending,
 }: CreatorDetailViewProps) {
-  const [tipAmount, setTipAmount] = useState("0.1");
+  const [tipAmount, setTipAmount] = useState("1");
 
-  if (loading && !creator) {
+  if (loading) {
     return (
-      <main className="p-8">
-        <p>로딩 중...</p>
-      </main>
-    );
-  }
-
-  if (!creator) {
-    return (
-      <main className="p-8">
-        <p>크리에이터를 찾을 수 없습니다.</p>
-      </main>
-    );
+      <div className="pl-2 pt-2">
+        Loading...
+      </div>
+    )
   }
 
   return (
-    <main className="p-8 max-w-4xl mx-auto space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{creator.display_name}</h1>
-          <p className="text-sm text-muted-foreground">
-            @{creator.user_name}
-            {creator.user_name_tag ? `#${creator.user_name_tag}` : ""} ·{" "}
-            <span className="font-mono text-xs">{creator.wallet_address}</span>
-          </p>
-          <p className="mt-2">
-            MemeScore:{" "}
-            <span className="font-semibold">
-              {creator.meme_score?.toFixed?.(2) ?? creator.meme_score}
-            </span>
-          </p>
-          {stats && (
-            <p className="text-xs text-muted-foreground mt-1">
-              최근 7일 Tip 횟수: {stats.tip_count_7d}, 총 Tip 수량:{" "}
-              {stats.tip_amount_total_7d}
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-col items-end gap-2">
-          <WalletConnector />
-
-          {tokenAddress && (
-            <p className="text-[10px] text-muted-foreground max-w-xs text-right">
-              Creator Token: <span className="font-mono">{tokenAddress}</span>
-            </p>
-          )}
-        </div>
-      </header>
-
-      {/* Tip 섹션 */}
-      <section className="border rounded-lg p-4 space-y-3">
-        <h2 className="text-lg font-semibold">Tip 보내기</h2>
-        <div className="flex items-center gap-2">
-          <Input
-            className="w-32"
-            value={tipAmount}
-            onChange={(e) => setTipAmount(e.target.value)}
-          />
-          <span className="text-sm text-muted-foreground">CREATOR 토큰</span>
-          <Button
-            onClick={() => onTip(tipAmount)}
-            disabled={tipPending}
-          >
-            {tipPending ? "전송 중..." : "Tip 보내기"}
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Tip 전송 후, 이 페이지의 MemeScore와 Tip 내역이 자동으로 갱신됩니다.
-        </p>
-        {error && <p className="text-xs text-red-500">{error}</p>}
-      </section>
-
-      {/* 최근 Tip 내역 */}
-      <section className="border rounded-lg p-4 space-y-3">
-        <h2 className="text-lg font-semibold">최근 Tip 내역</h2>
-        {recentTips.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            아직 Tip 내역이 없습니다.
-          </p>
-        )}
-        <ul className="space-y-2 max-h-64 overflow-auto text-sm">
-          {recentTips.map((t: any) => (
-            <li
-              key={t.id}
-              className="flex justify-between border-b last:border-0 pb-1"
-            >
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-[1400px] mx-auto px-8 py-8">
+        {/* Profile Header */}
+        <div className="bg-white rounded-lg border border-gray-200 p-8 mb-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-6">
+              <UserAvatar size="lg" />
               <div>
-                <div>Amount: {t.amount}</div>
-                <div className="text-[10px] text-muted-foreground">
-                  tx: {t.tx_hash}
+                <h1 className="text-2xl mb-1">
+                  <p>
+                    {creator.display_name}{" "}
+                    <span className="text-xs text-muted-foreground">
+                      @{creator.user_name}
+                      {creator.user_name_tag ? `#${creator.user_name_tag}` : ""}
+                    </span>
+                  </p>
+                </h1>
+                <div className="text-gray-500">Platinum</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-4xl mb-1">83.15</div>
+              <div className="text-gray-500 text-sm">MemeScore (7D)</div>
+              <div className="text-gray-500 text-sm">Global Rank #1 / Top 1% this week</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-4 gap-6 mb-6">
+          <StatCard label="EngagementScore (7D)" value="85.2" />
+          <StatCard label="ViewScore (7D)" value="78.3" />
+          <StatCard label="FollowScore (total)" value="93.6" />
+          <StatCard label="TipScore (7D)" value="75.5" />
+        </div>
+
+        <div>
+        {/* <div className="grid grid-cols-3 gap-6"> */}
+          {/* Left Column - MemeScore Chart (Commented Out) */}
+          {/* <div className="col-span-2 space-y-6"> */}
+            {/* MemeScore Line Chart - Commented Out as per requirements */}
+            {/* 
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-xl mb-4">MemeScore (7D)</h2>
+              <div className="bg-gray-100 h-64 flex items-center justify-center rounded">
+                <span className="text-gray-400">Line chart Placeholder - 7-day MemeScore Trend</span>
+              </div>
+            </div>
+            */}
+
+            {/* AI Activity Summary - Commented Out as per requirements */}
+            {/* 
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl">AI Activity Summary (7D)</h2>
+                <button className="px-4 py-2 text-gray-500 border border-gray-300 rounded hover:bg-gray-50">
+                  Re-run analysis
+                </button>
+              </div>
+              <p className="text-gray-500 mb-3">
+                Auto-generated from your MemeX activity and on-chain tips.
+              </p>
+              <ul className="space-y-2">
+                <li className="flex gap-2">
+                  <span className="text-black">▪</span>
+                  <span>Your MemeScore increased from 65.1 to 78.4 in the last 7 days.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-black">▪</span>
+                  <span>Your global rank moved from #27 to #12 among active MemeX creators.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-black">▪</span>
+                  <span>Likes, comments, reposts and views were the main drivers of this increase.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-black">▪</span>
+                  <span>On-chain tips contributed as an extra boost, but had a smaller impact this week.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-black">▪</span>
+                  <span>To keep growing your MemeScore, focus on comments, reposts and high-quality meme posts.</span>
+                </li>
+              </ul>
+              <p className="text-gray-400 text-sm mt-4">
+                For demo purposes only. Not financial advice.
+              </p>
+            </div>
+            */}
+          {/* </div> */}
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Send Tips */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+              <h3 className="text-gray-400 mb-4">Send Tip to this creator</h3>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => onTip(tipAmount)}
+                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  0.01 M
+                </button>
+                <button
+                  onClick={() => onTip(tipAmount)}
+                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  0.05 M
+                </button>
+                <button
+                  onClick={() => onTip(tipAmount)}
+                  className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  0.1 M
+                </button>
+                <button
+                  onClick={() => onTip(tipAmount)}
+                  className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Send Tip
+                </button>
+              </div>
+            </div>
+            {/* Recent Tips */}
+            <div className="bg-white rounded-lg border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl">Recent Tips</h2>
+                <div className="flex gap-4 text-sm text-gray-600 mt-2">
+                  <span>From</span>
+                  <span className="ml-auto">Amount</span>
+                  <span className="w-24 text-right">Time</span>
                 </div>
               </div>
-              <div className="text-xs text-muted-foreground">
-                {new Date(t.created_at).toLocaleString()}
+              <div className="divide-y divide-gray-100">
+                {creatorTipsData.map((tip: any, index: number) => (
+                  <div key={index} className="px-6 py-3 flex items-center gap-4">
+                    <UserAvatar size="sm" />
+                    <span className="text-sm">{tip.from}</span>
+                    <span className="ml-auto">{tip.amount}</span>
+                    <span className="w-24 text-right text-sm text-gray-500">{tip.time}</span>
+                  </div>
+                ))}
               </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </main>
+            </div>
+
+            {/* Send Tips */}
+            {/* <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl">Send Tips to this Creator</h2>
+                <button className="text-sm text-gray-500 underline">custom</button>
+              </div>
+              <div className="flex gap-4 mb-4">
+                <button
+                  onClick={() => onTip(tipAmount)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  0.1 M
+                </button>
+                <button
+                  onClick={() => onTip(tipAmount)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  0.1 M
+                </button>
+              </div>
+              <button
+                onClick={() => onTip(tipAmount)}
+                className="w-full px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800"
+              >
+                Send Tip
+              </button>
+            </div> */}
+          </div>
+        </div>
+
+        {/* Bottom Send Tip Section */}
+        {/* <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+          <h3 className="text-gray-400 mb-4">Send Tip to this creator</h3>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => onTip(tipAmount)}
+              className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+            >
+              0.01 M
+            </button>
+            <button
+              onClick={() => onTip(tipAmount)}
+              className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+            >
+              0.05 M
+            </button>
+            <button
+              onClick={() => onTip(tipAmount)}
+              className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+            >
+              0.1 M
+            </button>
+            <button
+              onClick={() => onTip(tipAmount)}
+              className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            >
+              Send Tip
+            </button>
+          </div>
+        </div> */}
+      </div>
+    </div>
   );
 }

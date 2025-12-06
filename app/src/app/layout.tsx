@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { type ReactNode } from 'react'
 import { cookieToInitialState } from 'wagmi'
 
+import { Header } from '@/components/Header'
 import { getConfig } from '../wagmi'
 import { Providers } from './providers'
 
@@ -23,6 +24,7 @@ export default async function RootLayout(props: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={inter.className}>
+        <Header />
         <Providers initialState={initialState}>{props.children}</Providers>
       </body>
     </html>
