@@ -74,7 +74,7 @@ export function CreatorDetailView({
                 </div>
                 <div className="text-gray-500 text-sm">MemeScore</div>
                 <div className="text-gray-500 text-sm">
-                  Tips: {stats?.tip_count_7d || 0} / Amount: {stats?.tip_amount_total_7d ? (weiToEthFormatted(stats.tip_amount_total_7d) + " tokens") : "0"}
+                  Tips: {stats?.tip_count_7d || 0} / Amount: {stats?.tip_amount_total_7d ? (weiToEthFormatted(stats.tip_amount_total_7d) + " M") : "0"}
                 </div>
               </div>
             </div>
@@ -265,7 +265,7 @@ export function CreatorDetailView({
                       <div key={index} className="px-6 py-3 flex items-center gap-4">
                         <UserAvatar size="sm" />
                         <span className="text-sm">{tip.from_creator_id ? `Creator #${tip.from_creator_id}` : 'Anonymous'}</span>
-                        <span className="ml-auto">{weiToEthFormatted(tip.amount)} tokens</span>
+                        <span className="ml-auto">{weiToEthFormatted(tip.amount)} M</span>
                         <span className="w-24 text-right text-sm text-gray-500">{timeAgo}</span>
                       </div>
                     );

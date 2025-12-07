@@ -128,7 +128,7 @@ export function DashboardView({
                           />
                         </div>
                       </td>
-                      <td className="px-6 py-4">{weiToEthFormatted(item.amount_total)} tokens</td>
+                      <td className="px-6 py-4">{weiToEthFormatted(item.amount_total)} M</td>
                       <td className="px-6 py-4">{item.tip_count}</td>
                       <td className="px-6 py-4">{creator?.meme_score?.toFixed(1) || '0'}</td>
                     </tr>
@@ -162,7 +162,7 @@ export function DashboardView({
             <>
               <StatCard
                 label="Total Tip Amount"
-                value={`${totalTipAmountEther.toFixed(4)} tokens`}
+                value={`${totalTipAmountEther.toFixed(4)} M`}
                 subtitle="Total Amount tipped"
               />
               <StatCard

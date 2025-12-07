@@ -140,7 +140,7 @@ def build_creator_context(metrics: Dict[str, Any], bot_score: float) -> str:
     lines.append(f"- 조회수: {int(metrics.get('views', 0))}회")
     lines.append(f"- 팔로워: {int(metrics.get('followers', 0))}명")
     lines.append(f"- Tip 횟수: {int(metrics.get('tip_count', 0))}회")
-    lines.append(f"- Tip 총액: {metrics.get('tip_amount', 0.0):.4f} ETH\n")
+    lines.append(f"- Tip 총액: {metrics.get('tip_amount', 0.0):.4f} M\n")
     
     if bot_score >= 50:
         lines.append(f"⚠️ 봇 의심 점수: {bot_score:.1f}/100 (비정상 활동 패턴 감지)")
@@ -230,7 +230,7 @@ def analyze_score():
         "views": 14500,
         "followers": 520,
         "tip_count": 4,
-        "tip_amount": 1.2  // ETH 단위
+        "tip_amount": 1.2  // M 단위
     }
     
     Response:
