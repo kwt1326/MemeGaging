@@ -28,12 +28,10 @@ export function WalletConnector() {
 
   const handleClick = useCallback(() => {
     if (isConnected) {
-      // 이미 연결된 상태면 → 클릭 시 해제
       disconnect()
       return
     }
 
-    // 아직 연결 안 된 상태면 → injected 커넥터로 연결 시도
     const injected = connectors.find((c) => c.id === 'injected') ?? connectors[0]
     if (!injected) {
       console.warn('No wallet connector available')
@@ -42,7 +40,6 @@ export function WalletConnector() {
 
     connect({ connector: injected }, { 
       onSuccess: (data) => {
-        // 비동기 처리를 non-blocking으로 실행
         registerWallet(data.accounts[0])
       }
     })

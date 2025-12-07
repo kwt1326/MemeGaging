@@ -28,7 +28,6 @@ export function LeaderboardView({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1400px] mx-auto px-8 py-8">
-        {/* Search Bar */}
         <div className="mb-8">
           <input
             type="text"
@@ -39,7 +38,6 @@ export function LeaderboardView({
           />
         </div>
 
-        {/* Title Section */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-3xl">MemeX Mindshare Leaderboard</h1>
@@ -52,7 +50,6 @@ export function LeaderboardView({
           </p>
         </div>
 
-        {/* Leaderboard Table */}
         <Card padding="none" className="overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-100 border-b border-gray-200">

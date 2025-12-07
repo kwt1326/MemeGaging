@@ -10,7 +10,6 @@ export function Header() {
   const isLeaderboard = pathname === '/';
   const isDashboard = pathname === '/dashboard';
 
-  // Use the context instead of local query
   const { user } = useCreatorContext();
 
   return (

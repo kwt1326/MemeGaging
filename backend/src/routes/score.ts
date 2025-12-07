@@ -3,10 +3,6 @@ import { prisma } from "../prisma";
 
 export const scoreRouter = Router();
 
-/**
- * GET /scores/creator/:creatorId
- * - Get score history for a specific creator
- */
 scoreRouter.get("/creator/:creatorId", async (req, res) => {
   try {
     const creatorId = Number(req.params.creatorId);
@@ -30,11 +26,6 @@ scoreRouter.get("/creator/:creatorId", async (req, res) => {
   }
 });
 
-
-/**
- * DELETE /scores/clear
- * - Clear all score records (useful for testing)
- */
 scoreRouter.delete("/clear", async (req, res) => {
   try {
     const result = await prisma.score.deleteMany({});

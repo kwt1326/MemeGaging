@@ -39,7 +39,7 @@ export async function fetchRanking(limit = 20, search = "") {
   const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
   const res = await fetch(
     `${API_BASE}/creators/ranking/top?limit=${limit}${searchParam}`,
-    { cache: 'no-store' }  // Disable caching to always get fresh data
+    { cache: 'no-store' }
   );
   return handle<{ creators: Creators }>(res);
 }

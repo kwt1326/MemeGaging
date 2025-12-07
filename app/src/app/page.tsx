@@ -11,7 +11,6 @@ export default function LeaderboardPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Debounce 300ms
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchQuery(searchInput);

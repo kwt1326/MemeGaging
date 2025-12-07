@@ -40,7 +40,6 @@ export async function allowTokenIfNeeded(tokenAddress: `0x${string}`) {
   const allowed = await isTokenAllowed(tokenAddress);
   if (allowed) return;
 
-  // owner 계정에서 setAllowedToken 호출
   const hash = await walletClient.writeContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi,
@@ -48,7 +47,6 @@ export async function allowTokenIfNeeded(tokenAddress: `0x${string}`) {
     args: [tokenAddress, true],
   });
 
-  // 필요하면 여기서 트랜잭션 mined 까지 기다리기
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
   console.log("setAllowedToken tx sent:", hash);
 }

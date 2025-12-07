@@ -1,4 +1,3 @@
-// hooks/useWalletConnection.ts
 'use client'
 
 import { useConnection } from 'wagmi'
@@ -9,6 +8,6 @@ export function useWalletConnection() {
   return {
     address,
     isConnected,
-    status, // 'connecting' | 'reconnecting' | 'connected' | 'disconnected'
+    status,
   }
 }

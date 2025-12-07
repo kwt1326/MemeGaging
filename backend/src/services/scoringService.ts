@@ -22,32 +22,19 @@ type ScoreBreakdown = {
   memeScore: number;
 };
 
-/**
- * 새로운 점수 계산 방법:
- * - EngagementScore: 좋아요 / 댓글 / 리포스트 / 인용 합산
- * - ViewScore: 조회수 기반 점수
- * - FollowScore: 팔로워 수 기반 점수
- * - TipScore: 온체인 Tip 횟수 / 금액 기반 점수
- */
 function calcMemeScoreV2(stats: Stats7d): ScoreBreakdown {
   const { likes, replies, reposts, quotes, views, followers, tipCount, tipAmount } = stats;
 
-  // EngagementScore: 좋아요 / 댓글 / 리포스트 / 인용 합산 (로그 스케일)
   const totalEngagement = likes + replies + reposts + quotes;
   const engagementScore = Math.log10(1 + totalEngagement) * 10;
 
-  // ViewScore: 조회수 기반 점수 (로그 스케일)
   const viewScore = Math.log10(1 + views) * 5;
 
-  // FollowScore: 팔로워 수 기반 점수 (로그 스케일)
   const followScore = Math.log10(1 + followers) * 8;
 
-  // TipScore: Tip 횟수와 금액 합산 (로그 스케일)
-  // tipAmount는 wei 단위 문자열이므로, ether로 변환
   const tipAmountEther = weiToEth(tipAmount);
   const tipScore = Math.log10(1 + tipCount) * 3 + Math.log10(1 + tipAmountEther) * 2;
 
-  // MemeScore = 각 점수의 가중 합산
   const memeScore = engagementScore + viewScore + followScore + tipScore;
 
   return {
@@ -66,13 +53,11 @@ export async function computeStatsForCreator(creatorId: number): Promise<Stats7d
   const now = Date.now();
   const since = now - SEVEN_DAYS_MS;
 
-  // Get the latest score record to preserve existing engagement data
   const latestScore = await prisma.score.findFirst({
     where: { creator_id: creatorId },
     orderBy: { created_at: 'desc' },
   });
 
-  // Preserve existing engagement data from the latest score
   let likes = latestScore?.likes || 0;
   let replies = latestScore?.replies || 0;
   let reposts = latestScore?.reposts || 0;
@@ -80,7 +65,6 @@ export async function computeStatsForCreator(creatorId: number): Promise<Stats7d
   let views = latestScore?.views || 0;
   let followers = latestScore?.followers || 0;
 
-  // Only recompute tips from the database
   const tips = await prisma.tip.findMany({
     where: {
       to_creator_id: creatorId,
@@ -100,7 +84,6 @@ export async function recomputeMemeScoreForCreator(creatorId: number) {
   const stats = await computeStatsForCreator(creatorId);
   const scoreBreakdown = calcMemeScoreV2(stats);
 
-  // Update creator's meme_score
   await prisma.creator.update({
     where: { id: creatorId },
     data: {
@@ -108,7 +91,6 @@ export async function recomputeMemeScoreForCreator(creatorId: number) {
     },
   });
 
-  // Also save a score record for historical tracking
   await prisma.score.create({
     data: {
       creator_id: creatorId,

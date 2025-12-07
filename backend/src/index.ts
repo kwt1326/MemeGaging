@@ -14,12 +14,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// healthcheck
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// 라우터
 app.use("/creators", creatorRouter);
 app.use("/dashboard", dashboardRouter);
 app.use("/wallet", walletRouter);

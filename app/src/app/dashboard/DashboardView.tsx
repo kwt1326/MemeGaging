@@ -24,7 +24,6 @@ export function DashboardView({
   const totalContributed = data?.total_contributed_amount || "0";
   const myScore = data?.my_score;
 
-  // Calculate statistics
   const uniqueCreatorsCount = data?.unique_creators_count || 0;
   const totalTipCount = data?.total_tip_count || 0;
   const totalTipAmountEther = weiToEth(totalContributed);
@@ -32,7 +31,6 @@ export function DashboardView({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1400px] mx-auto px-8 py-8">
-        {/* Stats Grid - For dashboard, these would be the user's own scores */}
         <div className="grid grid-cols-4 gap-6 mb-8">
           <StatCard 
             label="EngagementScore" 
@@ -52,7 +50,6 @@ export function DashboardView({
           />
         </div>
 
-        {/* Recent Tips Table */}
         <Card padding="none" className="mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl">Recent Tips</h2>
@@ -104,7 +101,6 @@ export function DashboardView({
           </table>
         </Card>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-3 gap-6 mb-8">
           <StatCard
             label="Total Tip Amount"
@@ -123,7 +119,6 @@ export function DashboardView({
           />
         </div>
 
-        {/* AI Summary */}
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl">AI Summary – My Activity Report</h2>

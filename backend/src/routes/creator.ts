@@ -43,11 +43,6 @@ creatorRouter.get("/from-address/:address", async (req, res) => {
   }
 });
 
-
-/**
- * GET /creators/search?q=...
- * - 크리에이터 검색 (user_name, display_name 기준)
- */
 creatorRouter.get("/search", async (req, res) => {
   try {
     const q = String(req.query.q || "").trim();
@@ -74,10 +69,6 @@ creatorRouter.get("/search", async (req, res) => {
   }
 });
 
-/**
- * GET /creators/:id
- * - 크리에이터 상세 정보 + 간단한 tip 통계 + 점수 breakdown
- */
 creatorRouter.get("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -93,7 +84,6 @@ creatorRouter.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "not_found" });
     }
 
-    // 최근 Tip 수량/금액 통계 (예시: 최근 7일)
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     const tips = await prisma.tip.findMany({
@@ -105,16 +95,13 @@ creatorRouter.get("/:id", async (req, res) => {
       take: 50,
     });
 
-    // 총 amount 합산 (Decimal -> string)
     const totalAmount = tips.reduce((acc, tip) => {
-      // Decimal to string
       const v = BigInt(tip.amount.toString());
       return acc + v;
     }, 0n);
 
     const user = await fetchMyInfo(creator.access_token);
 
-    // 점수 breakdown - 최신 score 레코드에서 가져오기
     let scoreBreakdown;
     try {
       const latestScore = await prisma.score.findFirst({
@@ -143,7 +130,7 @@ creatorRouter.get("/:id", async (req, res) => {
       user,
       stats: {
         tip_count_7d: tips.length,
-        tip_amount_total_7d: totalAmount.toString(), // wei 등의 단위 string
+        tip_amount_total_7d: totalAmount.toString(),
       },
       score_breakdown: scoreBreakdown,
       recent_tips: tips,
@@ -154,18 +141,12 @@ creatorRouter.get("/:id", async (req, res) => {
   }
 });
 
-/**
- * GET /creators/ranking/top?limit=100&search=keyword
- * - MemeScore 기준 글로벌 랭킹 (score 정보 포함)
- * - search 파라미터가 있으면 display_name으로 필터링
- */
 creatorRouter.get("/ranking/top", async (req, res) => {
   try {
     const limit = req.query.limit ? Number(req.query.limit) : 100;
     const safeLimit = Number.isNaN(limit) ? 100 : Math.min(limit, 3000);
     const search = req.query.search ? String(req.query.search).trim() : "";
 
-    // 검색 조건 구성
     const whereClause = search
       ? {
           display_name: {
@@ -175,7 +156,6 @@ creatorRouter.get("/ranking/top", async (req, res) => {
         }
       : {};
 
-    // creator와 최신 score를 함께 가져오기
     const creators = await prisma.creator.findMany({
       where: whereClause,
       orderBy: { meme_score: "desc" },
@@ -188,11 +168,10 @@ creatorRouter.get("/ranking/top", async (req, res) => {
       },
     });
 
-    // 응답 데이터 포맷팅 - score를 평탄화
     const formattedCreators = creators.map((creator) => ({
       ...creator,
       score: creator.scores[0] || null,
-      scores: undefined, // scores 배열은 제거
+      scores: undefined,
     }));
 
     res.json({ creators: formattedCreators });

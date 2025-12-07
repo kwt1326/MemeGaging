@@ -64,7 +64,6 @@ export function useCreatorContext() {
   return context;
 }
 
-// HOC for wrapping components with CreatorProvider
 export function withCreatorContext<P extends object>(
   Component: React.ComponentType<P>
 ) {

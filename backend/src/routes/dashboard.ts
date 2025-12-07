@@ -7,7 +7,6 @@ dashboardRouter.get("/:address", async (req, res) => {
   try {
     const address = String(req.params.address);
     
-    // Find the user's creator profile
     const me = await prisma.creator.findFirst({
       where: {
         wallet_address: {
@@ -21,13 +20,11 @@ dashboardRouter.get("/:address", async (req, res) => {
       return res.status(404).json({ error: "creator_not_found" });
     }
 
-    // Get user's latest score breakdown
     const myScore = await prisma.score.findFirst({
       where: { creator_id: me.id },
       orderBy: { created_at: "desc" },
     });
 
-    // Get all tips sent by this user
     const tipsSent = await prisma.tip.findMany({
       where: { from_creator_id: me.id },
       orderBy: { created_at: "desc" },
@@ -43,7 +40,6 @@ dashboardRouter.get("/:address", async (req, res) => {
       },
     });
 
-    // Group tips by creator and calculate totals
     const tippedCreatorsMap = new Map<number, {
       to_creator_id: number;
       creator: any;
@@ -79,7 +75,6 @@ dashboardRouter.get("/:address", async (req, res) => {
       }
     }
 
-    // Convert map to array and sort by amount
     const tippedCreators = Array.from(tippedCreatorsMap.values())
       .sort((a, b) => {
         const diff = BigInt(b.amount_total) - BigInt(a.amount_total);
