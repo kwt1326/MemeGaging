@@ -311,9 +311,9 @@ forge build
 # 테스트
 forge test
 
-# 배포 (예: Sepolia testnet)
+# 배포 (Insectarium testnet)
 forge script script/DeployMemeTipLoggerV2.s.sol \
-  --rpc-url $SEPOLIA_RPC_URL \
+  --rpc-url $MEMECORE_INSECTARIUM_RPC_URL \
   --private-key $DEPLOYER_PRIVATE_KEY \
   --broadcast
 ```
@@ -486,7 +486,7 @@ forge script script/DeployMemeTipLoggerV2.s.sol \
 ## 📈 향후 개선 방향
 
 - [ ] 실시간 이벤트 인덱싱 (The Graph 또는 Moralis)
-- [ ] 다중 체인 지원 (Ethereum, Polygon, Base 등)
+- [ ] 다중 체인 지원 (EVM 기반 - Ethereum, Polygon, Base 등)
 - [ ] ERC20 토큰 후원 지원
 - [ ] 크리에이터 전용 대시보드 (수익 분석)
 - [ ] 배지/업적 시스템
