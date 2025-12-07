@@ -15,7 +15,7 @@ export function Header() {
   return (
     <header className="border-b px-8 py-4">
       <div className="flex items-center justify-between max-w-[1400px] mx-auto">
-        <Link href="/" className="text-gray-900">
+        <Link href="/" className="text-gray-900 font-bold text-2xl">
           MemeGaging
         </Link>
         
