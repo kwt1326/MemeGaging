@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { fetchMyInfo } from "../clients/memexClient";
+import { analyzeCreatorStatsAsync } from "../services/aiAnalysisService";
 
 export const creatorRouter = Router();
 
@@ -103,6 +104,8 @@ creatorRouter.get("/:id", async (req, res) => {
     const user = await fetchMyInfo(creator.access_token);
 
     let scoreBreakdown;
+    let aiAnalysis = null;
+    
     try {
       const latestScore = await prisma.score.findFirst({
         where: { creator_id: id },
@@ -117,6 +120,17 @@ creatorRouter.get("/:id", async (req, res) => {
           tipScore: latestScore.tip_score,
           memeScore: latestScore.meme_score,
         };
+        
+        aiAnalysis = await analyzeCreatorStatsAsync({
+          likes: latestScore.likes,
+          replies: latestScore.replies,
+          reposts: latestScore.reposts,
+          quotes: latestScore.quotes,
+          views: latestScore.views,
+          followers: latestScore.followers,
+          tip_count: latestScore.tip_count,
+          tip_amount: totalAmount.toString(),
+        });
       } else {
         scoreBreakdown = null;
       }
@@ -133,6 +147,7 @@ creatorRouter.get("/:id", async (req, res) => {
         tip_amount_total_7d: totalAmount.toString(),
       },
       score_breakdown: scoreBreakdown,
+      ai_analysis: aiAnalysis,
       recent_tips: tips,
     });
   } catch (err) {

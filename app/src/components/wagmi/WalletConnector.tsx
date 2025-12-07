@@ -53,13 +53,17 @@ export function WalletConnector() {
   }
 
   return (
-    <Button
+    <button
       type="button"
       onClick={handleClick}
       disabled={isPending || connectors.length === 0}
-      className="px-4"
+      className={`px-4 py-2 rounded ${
+        isConnected
+          ? 'bg-gray-700 text-white'
+          : 'bg-white text-gray-700 border border-gray-300'
+      } ${(isPending || connectors.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {label}
-    </Button>
+    </button>
   )
 }

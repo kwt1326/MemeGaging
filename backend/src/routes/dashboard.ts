@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
+import { analyzeCreatorStatsAsync } from "../services/aiAnalysisService";
 
 export const dashboardRouter = Router();
 
@@ -81,6 +82,25 @@ dashboardRouter.get("/:address", async (req, res) => {
         return diff > 0n ? 1 : diff < 0n ? -1 : 0;
       });
 
+    // AI 분석 추가
+    let aiAnalysis = null;
+    if (myScore) {
+      try {
+        aiAnalysis = await analyzeCreatorStatsAsync({
+          likes: myScore.likes,
+          replies: myScore.replies,
+          reposts: myScore.reposts,
+          quotes: myScore.quotes,
+          views: myScore.views,
+          followers: myScore.followers,
+          tip_count: myScore.tip_count,
+          tip_amount: myScore.tip_amount.toString(),
+        });
+      } catch (error) {
+        console.warn("AI 분석 실패 (무시하고 계속):", error);
+      }
+    }
+
     res.json({
       me: {
         ...me,
@@ -91,6 +111,7 @@ dashboardRouter.get("/:address", async (req, res) => {
       total_contributed_amount: totalContributed.toString(),
       total_tip_count: tipsSent.length,
       unique_creators_count: tippedCreators.length,
+      ai_analysis: aiAnalysis,
     });
   } catch (err) {
     console.error(err);

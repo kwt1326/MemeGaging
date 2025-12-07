@@ -11,6 +11,7 @@ type CreatorDetailViewProps = {
   creator: any | null;
   stats: any | null;
   recentTips: any[];
+  aiAnalysis: any | null;
   error: string | null;
   isConnected: boolean;
   walletAddress?: `0x${string}` | undefined;
@@ -24,6 +25,7 @@ export function CreatorDetailView({
   creator,
   stats,
   recentTips,
+  aiAnalysis,
   onTip,
   tipPending,
 }: CreatorDetailViewProps) {
@@ -88,65 +90,107 @@ export function CreatorDetailView({
           />
         </div>
 
-        <div>
-        {/* <div className="grid grid-cols-3 gap-6"> */}
-          {/* Left Column - MemeScore Chart (Commented Out) */}
-          {/* <div className="col-span-2 space-y-6"> */}
-            {/* MemeScore Line Chart - Commented Out as per requirements */}
-            {/* 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-xl mb-4">MemeScore (7D)</h2>
-              <div className="bg-gray-100 h-64 flex items-center justify-center rounded">
-                <span className="text-gray-400">Line chart Placeholder - 7-day MemeScore Trend</span>
-              </div>
-            </div>
-            */}
-
-            {/* AI Activity Summary - Commented Out as per requirements */}
-            {/* 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="grid grid-cols-3 gap-6">
+          {/* Left Column - AI Analysis */}
+          <div className="col-span-2 space-y-6">
+            {/* AI Activity Summary */}
+            <Card>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl">AI Activity Summary (7D)</h2>
-                <button className="px-4 py-2 text-gray-500 border border-gray-300 rounded hover:bg-gray-50">
-                  Re-run analysis
-                </button>
               </div>
               <p className="text-gray-500 mb-3">
                 Auto-generated from your MemeX activity and on-chain tips.
               </p>
-              <ul className="space-y-2">
-                <li className="flex gap-2">
-                  <span className="text-black">▪</span>
-                  <span>Your MemeScore increased from 65.1 to 78.4 in the last 7 days.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-black">▪</span>
-                  <span>Your global rank moved from #27 to #12 among active MemeX creators.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-black">▪</span>
-                  <span>Likes, comments, reposts and views were the main drivers of this increase.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-black">▪</span>
-                  <span>On-chain tips contributed as an extra boost, but had a smaller impact this week.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-black">▪</span>
-                  <span>To keep growing your MemeScore, focus on comments, reposts and high-quality meme posts.</span>
-                </li>
-              </ul>
-              <p className="text-gray-400 text-sm mt-4">
-                For demo purposes only. Not financial advice.
-              </p>
-            </div>
-            */}
-          {/* </div> */}
+              
+              {/* AI 분석 로딩 중 - 스켈레톤 UI */}
+              {!aiAnalysis && (
+                <div className="space-y-3 animate-pulse">
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-full"></div>
+                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-full"></div>
+                      <div className="h-4 bg-gray-200 rounded w-4/5"></div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-full"></div>
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+                  <div className="text-center text-gray-400 text-sm mt-4">
+                    🤖 AI 분석 중...
+                  </div>
+                </div>
+              )}
+              
+              {/* AI 분석 결과 표시 */}
+              {aiAnalysis && (
+                <div className="space-y-2">
+                  {aiAnalysis.analysis.split('\n').map((line: string, idx: number) => {
+                    // 빈 줄 처리
+                    if (!line.trim()) {
+                      return <div key={idx} className="h-2"></div>;
+                    }
+                    // 헤더 처리 (🤖로 시작)
+                    if (line.startsWith('🤖')) {
+                      return (
+                        <h3 key={idx} className="text-lg font-semibold mb-2">
+                          {line}
+                        </h3>
+                      );
+                    }
+                    // Bullet point 처리
+                    if (line.trim().startsWith('▪')) {
+                      return (
+                        <div key={idx} className="flex gap-2">
+                          <span className="text-black">▪</span>
+                          <span>{line.trim().substring(1).trim()}</span>
+                        </div>
+                      );
+                    }
+                    // 일반 텍스트
+                    return (
+                      <p key={idx} className="text-gray-500 text-sm">
+                        {line}
+                      </p>
+                    );
+                  })}
+                  
+                  {/* 봇 점수 경고 */}
+                  {aiAnalysis.bot_score >= 50 && (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                      <p className="text-sm text-yellow-800">
+                        ⚠️ 봇 의심 점수: {aiAnalysis.bot_score.toFixed(1)}/100
+                      </p>
+                      <p className="text-xs text-yellow-700 mt-1">
+                        활동 패턴이 비정상적으로 보일 수 있습니다.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          </div>
 
           {/* Right Column */}
           <div className="space-y-6">
             {/* Send Tips */}
-            <Card className="mt-6">
+            <Card>
               <h3 className="text-gray-400 mb-4">Send Tip to this creator</h3>
               {tipPending && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">

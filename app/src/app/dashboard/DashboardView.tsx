@@ -9,11 +9,13 @@ import { weiToEth, weiToEthFormatted } from '@/lib/utils';
 type DashboardViewProps = {
   loading: boolean;
   data: any | null;
+  onRefreshAnalysis: () => void;
 };
 
 export function DashboardView({
   loading,
   data,
+  onRefreshAnalysis,
 }: DashboardViewProps) {
   const router = useRouter();
 
@@ -23,6 +25,7 @@ export function DashboardView({
   const tippedCreators = data?.tipped_creators || [];
   const totalContributed = data?.total_contributed_amount || "0";
   const myScore = data?.my_score;
+  const aiAnalysis = data?.ai_analysis;
 
   const uniqueCreatorsCount = data?.unique_creators_count || 0;
   const totalTipCount = data?.total_tip_count || 0;
@@ -122,23 +125,94 @@ export function DashboardView({
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl">AI Summary – My Activity Report</h2>
-            <Button variant="outline">Re-run analysis</Button>
+            <Button variant="outline" onClick={onRefreshAnalysis}>Re-run analysis</Button>
           </div>
-          <p className="text-gray-500 mb-4">
+          <p className="text-gray-500 mb-3">
             Automatically generated report based on your MemeScore, engagement and tipping data.
           </p>
-          <p className="text-gray-400 mb-4">
-            Your MemeScore increased from 8.120 to 8.647 and your rank improved from #52 to #45. This represents a solid 6.5% growth in your overall engagement metrics.
-          </p>
-          <p className="text-gray-400 mb-4">
-            You made 51 tips, with the majority going to three favorite creators, and your likes and comments remained stable. Your tipping pattern shows consistent support for high-performing creators.
-          </p>
-          <p className="text-gray-400 mb-4">
-            Increase meaningful comments and continue supporting top creators to further boost your MemeScore. Consider diversifying your engagement across more creators to maximize growth potential.
-          </p>
-          <div className="flex justify-end">
-            <Button variant="ghost">View top creators</Button>
-          </div>
+          
+          {/* AI 분석 로딩 중 - 스켈레톤 UI */}
+          {!aiAnalysis && (
+            <div className="space-y-3 animate-pulse">
+              <div className="flex gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-4/5"></div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              </div>
+              <div className="text-center text-gray-400 text-sm mt-4">
+                🤖 AI 분석 중...
+              </div>
+            </div>
+          )}
+          
+          {/* AI 분석 결과 표시 */}
+          {aiAnalysis && (
+            <div className="space-y-2">
+              {aiAnalysis.analysis.split('\n').map((line: string, idx: number) => {
+                // 빈 줄 처리
+                if (!line.trim()) {
+                  return <div key={idx} className="h-2"></div>;
+                }
+                // 헤더 처리 (🤖로 시작)
+                if (line.startsWith('🤖')) {
+                  return (
+                    <h3 key={idx} className="text-lg font-semibold mb-2">
+                      {line}
+                    </h3>
+                  );
+                }
+                // Bullet point 처리
+                if (line.trim().startsWith('▪')) {
+                  return (
+                    <div key={idx} className="flex gap-2">
+                      <span className="text-black">▪</span>
+                      <span>{line.trim().substring(1).trim()}</span>
+                    </div>
+                  );
+                }
+                // 일반 텍스트
+                return (
+                  <p key={idx} className="text-gray-500 text-sm">
+                    {line}
+                  </p>
+                );
+              })}
+              
+              {/* 봇 점수 경고 */}
+              {aiAnalysis.bot_score >= 50 && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                  <p className="text-sm text-yellow-800">
+                    ⚠️ 봇 의심 점수: {aiAnalysis.bot_score.toFixed(1)}/100
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    활동 패턴이 비정상적으로 보일 수 있습니다.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       </div>
     </div>

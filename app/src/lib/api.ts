@@ -26,6 +26,26 @@ export async function fetchCreatorDetail(id: string | number) {
       tipScore: number;
       memeScore: number;
     };
+    ai_analysis?: {
+      analysis: string;
+      score_breakdown: {
+        like_points: number;
+        comment_points: number;
+        repost_points: number;
+        quote_points: number;
+        view_points: number;
+        follow_points: number;
+        tip_points: number;
+        like_label: string;
+        comment_label: string;
+        repost_label: string;
+        quote_label: string;
+        view_label: string;
+        follower_label: string;
+        tip_label: string;
+      };
+      bot_score: number;
+    } | null;
     recent_tips: RecentTips;
   }>(res);
 }

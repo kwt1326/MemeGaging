@@ -120,4 +120,24 @@ interface DashboardData {
   total_contributed_amount: string;
   total_tip_count: number;
   unique_creators_count: number;
+  ai_analysis?: {
+    analysis: string;
+    score_breakdown: {
+      like_points: number;
+      comment_points: number;
+      repost_points: number;
+      quote_points: number;
+      view_points: number;
+      follow_points: number;
+      tip_points: number;
+      like_label: string;
+      comment_label: string;
+      repost_label: string;
+      quote_label: string;
+      view_label: string;
+      follower_label: string;
+      tip_label: string;
+    };
+    bot_score: number;
+  } | null;
 }

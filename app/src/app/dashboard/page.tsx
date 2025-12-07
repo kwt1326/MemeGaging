@@ -26,6 +26,7 @@ export default function DashboardPage() {
     <DashboardView
       loading={isLoading}
       data={data ?? null}
+      onRefreshAnalysis={refetch}
     />
   );
 }

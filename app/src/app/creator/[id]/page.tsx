@@ -54,6 +54,7 @@ export default function CreatorDetailPage() {
   const [creatorStats, setCreatorStats] = useState<CreatorStat | null>(null);
   const [creatorRecentTips, setCreatorRecentTips] = useState<RecentTips | []>([]);
   const [pendingTipAmount, setPendingTipAmount] = useState<string>("0");
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
 
   const query = useQuery({
     queryKey: ["creatorDetail", creatorId],
@@ -193,6 +194,7 @@ export default function CreatorDetailPage() {
         score_breakdown: data.score_breakdown
       })
       setCreatorRecentTips(data.recent_tips)
+      setAiAnalysis(data.ai_analysis || null)
     }
   });
   
@@ -204,6 +206,7 @@ export default function CreatorDetailPage() {
       creator={creator}
       stats={creatorStats}
       recentTips={creatorRecentTips}
+      aiAnalysis={aiAnalysis}
       error={renderError}
       isConnected={isConnected}
       walletAddress={address}

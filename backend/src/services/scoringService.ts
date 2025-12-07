@@ -84,6 +84,7 @@ export async function recomputeMemeScoreForCreator(creatorId: number) {
   const stats = await computeStatsForCreator(creatorId);
   const scoreBreakdown = calcMemeScoreV2(stats);
 
+  // Update creator's meme_score
   await prisma.creator.update({
     where: { id: creatorId },
     data: {
@@ -91,8 +92,25 @@ export async function recomputeMemeScoreForCreator(creatorId: number) {
     },
   });
 
-  await prisma.score.create({
-    data: {
+  // Upsert score record (update if exists, create if not)
+  await prisma.score.upsert({
+    where: { creator_id: creatorId },
+    update: {
+      engagement_score: scoreBreakdown.engagementScore,
+      view_score: scoreBreakdown.viewScore,
+      follow_score: scoreBreakdown.followScore,
+      tip_score: scoreBreakdown.tipScore,
+      meme_score: scoreBreakdown.memeScore,
+      likes: stats.likes,
+      replies: stats.replies,
+      reposts: stats.reposts,
+      quotes: stats.quotes,
+      views: stats.views,
+      followers: stats.followers,
+      tip_count: stats.tipCount,
+      tip_amount: stats.tipAmount,
+    },
+    create: {
       creator_id: creatorId,
       engagement_score: scoreBreakdown.engagementScore,
       view_score: scoreBreakdown.viewScore,
