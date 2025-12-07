@@ -31,63 +31,89 @@ export function CreatorDetailView({
 }: CreatorDetailViewProps) {
   const [tipAmount, setTipAmount] = useState("1");
 
-  if (loading || !creator) {
-    return (
-      <div className="pl-2 pt-2">
-        Loading...
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1400px] mx-auto px-8 py-8">
         {/* Profile Header */}
         <Card padding="lg" className="mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-6">
-              <UserAvatar size="lg" />
-              <div>
-                <h1 className="text-2xl mb-1">
-                  <CreatorName
-                    displayName={creator.display_name}
-                    userName={creator.user_name}
-                    userNameTag={creator.user_name_tag}
-                  />
-                </h1>
-                <div className="text-gray-500">Platinum</div>
+          {!creator ? (
+            <div className="animate-pulse">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
+                  <div className="space-y-2">
+                    <div className="h-8 bg-gray-200 rounded w-48"></div>
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                  </div>
+                </div>
+                <div className="text-right space-y-2">
+                  <div className="h-10 bg-gray-200 rounded w-20 ml-auto"></div>
+                  <div className="h-4 bg-gray-200 rounded w-24 ml-auto"></div>
+                  <div className="h-4 bg-gray-200 rounded w-32 ml-auto"></div>
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-4xl mb-1">
-                {stats?.score_breakdown?.memeScore?.toFixed(1) || creator?.meme_score?.toFixed(1) || "0"}
+          ) : (
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-6">
+                <UserAvatar size="lg" />
+                <div>
+                  <h1 className="text-2xl mb-1">
+                    <CreatorName
+                      displayName={creator.display_name}
+                      userName={creator.user_name}
+                      userNameTag={creator.user_name_tag}
+                    />
+                  </h1>
+                  <div className="text-gray-500">Platinum</div>
+                </div>
               </div>
-              <div className="text-gray-500 text-sm">MemeScore</div>
-              <div className="text-gray-500 text-sm">
-                Tips: {stats?.tip_count_7d || 0} / Amount: {stats?.tip_amount_total_7d ? (weiToEthFormatted(stats.tip_amount_total_7d) + " tokens") : "0"}
+              <div className="text-right">
+                <div className="text-4xl mb-1">
+                  {stats?.score_breakdown?.memeScore?.toFixed(1) || creator?.meme_score?.toFixed(1) || "0"}
+                </div>
+                <div className="text-gray-500 text-sm">MemeScore</div>
+                <div className="text-gray-500 text-sm">
+                  Tips: {stats?.tip_count_7d || 0} / Amount: {stats?.tip_amount_total_7d ? (weiToEthFormatted(stats.tip_amount_total_7d) + " tokens") : "0"}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </Card>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-4 gap-6 mb-6">
-          <StatCard 
-            label="EngagementScore" 
-            value={stats?.score_breakdown?.engagementScore?.toFixed(1) || "0"} 
-          />
-          <StatCard 
-            label="ViewScore" 
-            value={stats?.score_breakdown?.viewScore?.toFixed(1) || "0"} 
-          />
-          <StatCard 
-            label="FollowScore" 
-            value={stats?.score_breakdown?.followScore?.toFixed(1) || "0"} 
-          />
-          <StatCard 
-            label="TipScore" 
-            value={stats?.score_breakdown?.tipScore?.toFixed(1) || "0"} 
-          />
+          {!stats ? (
+            <>
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i}>
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  </div>
+                </Card>
+              ))}
+            </>
+          ) : (
+            <>
+              <StatCard 
+                label="EngagementScore" 
+                value={stats?.score_breakdown?.engagementScore?.toFixed(1) || "0"} 
+              />
+              <StatCard 
+                label="ViewScore" 
+                value={stats?.score_breakdown?.viewScore?.toFixed(1) || "0"} 
+              />
+              <StatCard 
+                label="FollowScore" 
+                value={stats?.score_breakdown?.followScore?.toFixed(1) || "0"} 
+              />
+              <StatCard 
+                label="TipScore" 
+                value={stats?.score_breakdown?.tipScore?.toFixed(1) || "0"} 
+              />
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-6">
@@ -220,7 +246,19 @@ export function CreatorDetailView({
                 </div>
               </div>
               <div className="divide-y divide-gray-100">
-                {recentTips && recentTips.length > 0 ? (
+                {!recentTips ? (
+                  // 로딩 중 스켈레톤
+                  <>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="px-6 py-3 flex items-center gap-4 animate-pulse">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        <div className="ml-auto h-4 bg-gray-200 rounded w-20"></div>
+                        <div className="w-24 h-4 bg-gray-200 rounded"></div>
+                      </div>
+                    ))}
+                  </>
+                ) : recentTips.length > 0 ? (
                   recentTips.slice(0, 10).map((tip: any, index: number) => {
                     const timeAgo = new Date(tip.created_at).toLocaleString();
                     return (

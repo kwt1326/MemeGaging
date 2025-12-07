@@ -35,22 +35,37 @@ export function DashboardView({
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1400px] mx-auto px-8 py-8">
         <div className="grid grid-cols-4 gap-6 mb-8">
-          <StatCard 
-            label="EngagementScore" 
-            value={myScore?.engagement_score?.toFixed(1) || "0"} 
-          />
-          <StatCard 
-            label="ViewScore" 
-            value={myScore?.view_score?.toFixed(1) || "0"} 
-          />
-          <StatCard 
-            label="FollowScore" 
-            value={myScore?.follow_score?.toFixed(1) || "0"} 
-          />
-          <StatCard 
-            label="TipScore" 
-            value={myScore?.tip_score?.toFixed(1) || "0"} 
-          />
+          {!myScore ? (
+            <>
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i}>
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-32"></div>
+                    <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  </div>
+                </Card>
+              ))}
+            </>
+          ) : (
+            <>
+              <StatCard 
+                label="EngagementScore" 
+                value={myScore?.engagement_score?.toFixed(1) || "0"} 
+              />
+              <StatCard 
+                label="ViewScore" 
+                value={myScore?.view_score?.toFixed(1) || "0"} 
+              />
+              <StatCard 
+                label="FollowScore" 
+                value={myScore?.follow_score?.toFixed(1) || "0"} 
+              />
+              <StatCard 
+                label="TipScore" 
+                value={myScore?.tip_score?.toFixed(1) || "0"} 
+              />
+            </>
+          )}
         </div>
 
         <Card padding="none" className="mb-8">
@@ -67,7 +82,33 @@ export function DashboardView({
               </tr>
             </thead>
             <tbody>
-              {tippedCreators.length > 0 ? (
+              {!tippedCreators ? (
+                // 로딩 중 스켈레톤
+                <>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i} className="border-b border-gray-100">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3 animate-pulse">
+                          <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-32"></div>
+                            <div className="h-3 bg-gray-200 rounded w-24"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              ) : tippedCreators.length > 0 ? (
                 tippedCreators.map((item: any, index: number) => {
                   const creator = item.creator;
                   return (
@@ -96,7 +137,7 @@ export function DashboardView({
               ) : (
                 <tr>
                   <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
-                    {loading ? 'Loading...' : 'No tips sent yet'}
+                    No tips sent yet
                   </td>
                 </tr>
               )}
@@ -105,21 +146,37 @@ export function DashboardView({
         </Card>
 
         <div className="grid grid-cols-3 gap-6 mb-8">
-          <StatCard
-            label="Total Tip Amount"
-            value={`${totalTipAmountEther.toFixed(4)} tokens`}
-            subtitle="Total Amount tipped"
-          />
-          <StatCard
-            label="Total Tip Count"
-            value={totalTipCount.toString()}
-            subtitle="Total number of tips sent"
-          />
-          <StatCard
-            label="Unique Creators"
-            value={uniqueCreatorsCount.toString()}
-            subtitle="Number of unique creators tipped"
-          />
+          {!data ? (
+            <>
+              {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-32"></div>
+                    <div className="h-8 bg-gray-200 rounded w-24"></div>
+                    <div className="h-3 bg-gray-200 rounded w-40"></div>
+                  </div>
+                </Card>
+              ))}
+            </>
+          ) : (
+            <>
+              <StatCard
+                label="Total Tip Amount"
+                value={`${totalTipAmountEther.toFixed(4)} tokens`}
+                subtitle="Total Amount tipped"
+              />
+              <StatCard
+                label="Total Tip Count"
+                value={totalTipCount.toString()}
+                subtitle="Total number of tips sent"
+              />
+              <StatCard
+                label="Unique Creators"
+                value={uniqueCreatorsCount.toString()}
+                subtitle="Number of unique creators tipped"
+              />
+            </>
+          )}
         </div>
 
         <Card>
