@@ -7,6 +7,7 @@ import { type State, WagmiProvider } from 'wagmi'
 import { getConfig } from '@/wagmi'
 import { AutoInjectedConnect } from '@/components/wagmi/AutoInjectedConnect'
 import { Header } from '@/components/Header'
+import { CreatorProvider } from '@/contexts/CreatorContext'
 
 export function Providers(props: {
   children: ReactNode
@@ -22,8 +23,11 @@ export function Providers(props: {
       initialState={props.initialState}
     >
       <QueryClientProvider client={queryClient}>
-        <AutoInjectedConnect />
-        {props.children}
+        <CreatorProvider>
+          <AutoInjectedConnect />
+          <Header />
+          {props.children}
+        </CreatorProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )

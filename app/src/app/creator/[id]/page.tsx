@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useDisconnect, useWriteContract } from "wagmi";
+import { useDisconnect, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits } from "viem";
-import { fetchCreatorDetail, notifyTip, fetchCreatorDetailByAddress } from "@/lib/api";
+import { fetchCreatorDetail, notifyTip } from "@/lib/api";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 
 import { CreatorDetailView } from "./CreatorDetailView";
 import { useQueryEffects } from "@/hooks/useQueryEffects";
+import { useCreatorContext } from "@/contexts/CreatorContext";
 
 const LOGGER_ADDRESS =
   (process.env.NEXT_PUBLIC_TIP_LOGGER_ADDRESS as `0x${string}`) ??
@@ -18,121 +19,197 @@ const LOGGER_ADDRESS =
 const loggerAbi = [
   {
     type: "function",
-    name: "tipWithToken",
-    stateMutability: "nonpayable",
+    name: "tipWithNative",
+    stateMutability: "payable",
     inputs: [
-      { name: "token", type: "address" },
       { name: "to", type: "address" },
-      { name: "amount", type: "uint256" },
       { name: "memexUserName", type: "string" },
       { name: "memexUserNameTag", type: "string" },
     ],
     outputs: [],
   },
+  {
+    type: "function",
+    name: "paused",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "bool" }],
+  },
 ] as const;
+
 
 export default function CreatorDetailPage() {
   const params = useParams<{ id: string }>();
   const creatorId = Number(params.id);
 
+  const { creator: meCreatorInfo } = useCreatorContext();
   const { address, isConnected } = useWalletConnection();
-  const { data: hash, writeContract } = useWriteContract()
+  const { writeContract } = useWriteContract();
   const { disconnect } = useDisconnect();
 
-  const [myCreatorId, setMyCreatorId] = useState<number | null>(null);
-  const [myTokenAddress, setMyTokenAddress] = useState<`0x${string}` | null>(null);
   const [tipPending, setTipPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tipHash, setTipHash] = useState<`0x${string}` | undefined>();
+  const [creator, setCreator] = useState<Creator | null>(null);
+  const [creatorStats, setCreatorStats] = useState<CreatorStat | null>(null);
+  const [creatorRecentTips, setCreatorRecentTips] = useState<RecentTips | []>([]);
+  const [pendingTipAmount, setPendingTipAmount] = useState<string>("0");
 
-  const {
-    data,
-    isLoading,
-    error: queryError,
-    refetch,
-  } = useQuery({
+  const query = useQuery({
     queryKey: ["creatorDetail", creatorId],
     queryFn: () => fetchCreatorDetail(creatorId),
     enabled: !!creatorId,
   });
 
-  const creatorDetailByAddressQuery = useQuery({
-    queryKey: ["creatorDetailByAddress", address],
-    queryFn: () => fetchCreatorDetailByAddress(address),
-    enabled: !!address,
+  // Check if logger contract is paused
+  const { data: isContractPaused } = useReadContract({
+    address: LOGGER_ADDRESS,
+    abi: loggerAbi,
+    functionName: "paused",
   });
 
-  const creator = data?.creator ?? null;
-  const stats = data?.stats ?? null;
-  const recentTips = data?.recent_tips ?? [];
+  // Wait for tip transaction receipt
+  const { isLoading: isTipPending, isSuccess: isTipConfirmed, error: tipError } = useWaitForTransactionReceipt({
+    hash: tipHash,
+  });
+
+  // Watch for tip transaction confirmation and call notify API only after success
+  useEffect(() => {
+    if (isTipConfirmed && tipHash && tipPending && creator && meCreatorInfo?.id && pendingTipAmount !== "0") {
+      const notifyBackend = async () => {
+        try {
+          // Call backend notify API to record tip
+          await notifyTip({
+            to_creator_id: creator.id,
+            from_creator_id: meCreatorInfo.id,
+            token_address: "0x0000000000000000000000000000000000000000", // Native coin
+            amount: pendingTipAmount,
+            tx_hash: tipHash,
+          });
+          
+          alert("Tip sent successfully!");
+          
+          // Force refetch with a small delay to ensure backend has processed
+          setTimeout(async () => {
+            const result = await query.refetch();
+            if (result.data) {
+              setCreator(result.data.creator);
+              setCreatorStats({
+                ...result.data.stats,
+                score_breakdown: result.data.score_breakdown
+              });
+              setCreatorRecentTips(result.data.recent_tips);
+            }
+          }, 500);
+        } catch (err: any) {
+          console.error("Failed to notify tip:", err);
+          setError("Tip was sent on-chain but failed to record: " + err.message);
+        } finally {
+          setTipPending(false);
+          setTipHash(undefined);
+          setPendingTipAmount("0");
+        }
+      };
+
+      notifyBackend();
+    }
+  }, [isTipConfirmed, tipHash, tipPending, creator, meCreatorInfo, pendingTipAmount, query]);
+
+  // Watch for tip transaction failure
+  useEffect(() => {
+    if (tipError && tipPending) {
+      setError("Tip 트랜잭션 실패: " + (tipError as any).message);
+      setTipPending(false);
+      setTipHash(undefined);
+      setPendingTipAmount("0");
+    }
+  }, [tipError, tipPending]);
 
   const handleTip = async (tipAmount: string) => {
     try {
       setError(null);
+
+      if (!creator || !meCreatorInfo?.id) {
+        setError("크리에이터 정보가 없습니다.");
+        console.info("크리에이터 정보가 없습니다.")
+        return;
+      }
       
-      if (!creator || !myCreatorId) return;
-      if (!myTokenAddress) {
-        setError("먼저 지갑을 연동해서 토큰 화이트리스트를 등록해주세요.");
+      if (!address) {
+        setError("지갑을 먼저 연결해주세요.");
+        console.info("지갑을 먼저 연결해주세요.")
+        return;
+      }
+
+      if (isContractPaused) {
+        setError("Tip 기능이 일시 중지되었습니다.");
+        console.info("Tip 기능이 일시 중지되었습니다.")
         return;
       }
 
       const amountWei = parseUnits(tipAmount, 18);
+      setPendingTipAmount(amountWei.toString());
       setTipPending(true);
 
-      console.log("writeContract waiting...", hash);
-
-      writeContract({
-        address: LOGGER_ADDRESS,
-        abi: loggerAbi,
-        functionName: "tipWithToken",
-        args: [
-          myTokenAddress,
-          creator.wallet_address as `0x${string}`,
-          amountWei,
-          creator.user_name as string,
-          (creator.user_name_tag as string) ?? "",
-        ],
-      }, {
-        onSuccess: async (txHash) => {
-          await notifyTip({
-            to_creator_id: creator.id,
-            from_creator_id: myCreatorId,
-            token_address: myTokenAddress,
-            amount: amountWei.toString(),
-            tx_hash: txHash,
-          });
-          await refetch();
+      // Send native coin tip
+      writeContract(
+        {
+          address: LOGGER_ADDRESS,
+          abi: loggerAbi,
+          functionName: "tipWithNative",
+          args: [
+            creator.wallet_address as `0x${string}`,
+            creator.user_name as string,
+            (creator.user_name_tag as string) ?? "",
+          ],
+          value: amountWei,
+        },
+        {
+          onSuccess: (txHash) => {
+            console.info("테스트 성공")
+            setTipHash(txHash);
+          },
+          onError: (err) => {
+            console.info("테스트 실패")
+            setError("Tip 전송 실패: " + err.message);
+            setTipPending(false);
+            setPendingTipAmount("0");
+          },
         }
-      });
+      );
     } catch (err: any) {
-      console.error(err);
       setError(err.message ?? "Tip 전송 실패");
-    } finally {
       setTipPending(false);
+      setPendingTipAmount("0");
     }
   };
 
-  useQueryEffects(creatorDetailByAddressQuery, {
+  const creatorDetailQuery = useQueryEffects(query, {
     onSuccess: (data) => {
-      setMyCreatorId(data.creator_id)
-      setMyTokenAddress(data.token_address as `0x${string}`)
+      setCreator(data.creator)
+      // Merge stats and score_breakdown into one object
+      setCreatorStats({
+        ...data.stats,
+        score_breakdown: data.score_breakdown
+      })
+      setCreatorRecentTips(data.recent_tips)
     }
   });
-
-  console.log("test")
   
+  const renderError = error ?? (creatorDetailQuery.error ? (creatorDetailQuery.error as Error).message : null)
+
   return (
     <CreatorDetailView
-      loading={isLoading}
+      loading={creatorDetailQuery.isLoading}
       creator={creator}
-      stats={stats}
-      recentTips={recentTips}
-      error={error ?? (queryError ? (queryError as Error).message : null)}
+      stats={creatorStats}
+      recentTips={creatorRecentTips}
+      error={renderError}
       isConnected={isConnected}
       walletAddress={address}
-      tokenAddress={myTokenAddress}
+      tipPending={tipPending || isTipPending}
       onDisconnect={disconnect}
       onTip={handleTip}
-      tipPending={tipPending}
     />
   );
 }

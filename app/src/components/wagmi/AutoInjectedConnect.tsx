@@ -21,6 +21,11 @@ export function AutoInjectedConnect() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
+    // disconnect 상태일 때는 triedOnceRef 리셋 (재연결 가능하도록)
+    if (connection.status === 'disconnected') {
+      triedOnceRef.current = false
+    }
+
     // 이미 한 번 시도했으면 또 호출 안 함 (무한 루프 방지)
     if (triedOnceRef.current) return
 

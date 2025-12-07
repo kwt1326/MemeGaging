@@ -1,38 +1,59 @@
-import Link from 'next/link';
-import { StatCard } from '../../components/StatCard';
-import { UserAvatar } from '../../components/UserAvatar';
-import { recentTipsData } from '../../data/mockData';
+import { useRouter } from 'next/navigation';
+import { StatCard } from '@/components/StatCard';
+import { UserAvatar } from '@/components/UserAvatar';
+import { CreatorName } from '@/components/CreatorName';
+import { Card } from '@/components/Card';
+import { Button } from '@/components/Button';
+import { weiToEth, weiToEthFormatted } from '@/lib/utils';
 
 type DashboardViewProps = {
-  creatorIdInput: string;
-  onCreatorIdChange: (v: string) => void;
   loading: boolean;
-  error: string | null;
   data: any | null;
-  onLoadDashboard: () => void;
 };
 
 export function DashboardView({
-  creatorIdInput,
-  onCreatorIdChange,
   loading,
-  error,
   data,
-  onLoadDashboard,
 }: DashboardViewProps) {
+  const router = useRouter();
+
+  const handleRowClick = (creatorId: number) => {
+    router.push(`/creator/${creatorId}`);
+  };
+  const tippedCreators = data?.tipped_creators || [];
+  const totalContributed = data?.total_contributed_amount || "0";
+  const myScore = data?.my_score;
+
+  // Calculate statistics
+  const uniqueCreatorsCount = data?.unique_creators_count || 0;
+  const totalTipCount = data?.total_tip_count || 0;
+  const totalTipAmountEther = weiToEth(totalContributed);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1400px] mx-auto px-8 py-8">
-        {/* Stats Grid */}
+        {/* Stats Grid - For dashboard, these would be the user's own scores */}
         <div className="grid grid-cols-4 gap-6 mb-8">
-          <StatCard label="EngagementScore (7D)" value="85.2" />
-          <StatCard label="ViewScore (7D)" value="78.3" />
-          <StatCard label="FollowScore (total)" value="93.6" />
-          <StatCard label="TipScore (7D)" value="75.5" />
+          <StatCard 
+            label="EngagementScore" 
+            value={myScore?.engagement_score?.toFixed(1) || "0"} 
+          />
+          <StatCard 
+            label="ViewScore" 
+            value={myScore?.view_score?.toFixed(1) || "0"} 
+          />
+          <StatCard 
+            label="FollowScore" 
+            value={myScore?.follow_score?.toFixed(1) || "0"} 
+          />
+          <StatCard 
+            label="TipScore" 
+            value={myScore?.tip_score?.toFixed(1) || "0"} 
+          />
         </div>
 
         {/* Recent Tips Table */}
-        <div className="bg-white rounded-lg border border-gray-200 mb-8">
+        <Card padding="none" className="mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl">Recent Tips</h2>
           </div>
@@ -43,66 +64,76 @@ export function DashboardView({
                 <th className="px-6 py-3 text-left">MY TIP AMOUNT</th>
                 <th className="px-6 py-3 text-left">TIP COUNT</th>
                 <th className="px-6 py-3 text-left">MEMESCORE</th>
-                <th className="px-6 py-3 text-left">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-              {recentTipsData.map((tip, index) => (
-                <tr key={index} className="border-b border-gray-100">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <UserAvatar size="sm" />
-                      <span>{tip.username}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">{tip.tipAmount}</td>
-                  <td className="px-6 py-4">{tip.tipCount}</td>
-                  <td className="px-6 py-4">{tip.memeScore.toLocaleString()}</td>
-                  <td className="px-6 py-4">
-                    <Link href={`/creator/${tip.username}`}>
-                      <button className="px-4 py-1 bg-gray-400 text-white rounded hover:bg-gray-500">
-                        Open Creator
-                      </button>
-                    </Link>
+              {tippedCreators.length > 0 ? (
+                tippedCreators.map((item: any, index: number) => {
+                  const creator = item.creator;
+                  return (
+                    <tr 
+                      key={index} 
+                      onClick={() => handleRowClick(item.to_creator_id)}
+                      className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <UserAvatar size="sm" />
+                          <CreatorName
+                            displayName={creator?.display_name || 'Unknown'}
+                            userName={creator?.user_name || 'N/A'}
+                            userNameTag={creator?.user_name_tag}
+                            usernameClassName="text-xs text-gray-500"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">{weiToEthFormatted(item.amount_total)} tokens</td>
+                      <td className="px-6 py-4">{item.tip_count}</td>
+                      <td className="px-6 py-4">{creator?.meme_score?.toFixed(1) || '0'}</td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                    {loading ? 'Loading...' : 'No tips sent yet'}
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
-        </div>
+        </Card>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-3 gap-6 mb-8">
           <StatCard
-            label="Total Tip Amount (7D)"
-            value="52.2 M"
-            subtitle="Total Amount tipped in last 7 days"
+            label="Total Tip Amount"
+            value={`${totalTipAmountEther.toFixed(4)} tokens`}
+            subtitle="Total Amount tipped"
           />
           <StatCard
-            label="Total Tip Count (7D)"
-            value="35"
-            subtitle="Number of tips sent in last 7 days"
+            label="Total Tip Count"
+            value={totalTipCount.toString()}
+            subtitle="Total number of tips sent"
           />
           <StatCard
-            label="Total MemeScore Contribution"
-            value="+583"
-            subtitle="Your contribution to creator memescore"
+            label="Unique Creators"
+            value={uniqueCreatorsCount.toString()}
+            subtitle="Number of unique creators tipped"
           />
         </div>
 
         {/* AI Summary */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl">AI Summary – My Activity Report (7D)</h2>
-            <button className="px-4 py-2 text-gray-500 border border-gray-300 rounded hover:bg-gray-50">
-              Re-run analysis
-            </button>
+            <h2 className="text-xl">AI Summary – My Activity Report</h2>
+            <Button variant="outline">Re-run analysis</Button>
           </div>
           <p className="text-gray-500 mb-4">
             Automatically generated report based on your MemeScore, engagement and tipping data.
           </p>
           <p className="text-gray-400 mb-4">
-            In the last 7 days your MemeScore increased from 8.120 to 8.647 and your rank improved from #52 to #45. This represents a solid 6.5% growth in your overall engagement metrics.
+            Your MemeScore increased from 8.120 to 8.647 and your rank improved from #52 to #45. This represents a solid 6.5% growth in your overall engagement metrics.
           </p>
           <p className="text-gray-400 mb-4">
             You made 51 tips, with the majority going to three favorite creators, and your likes and comments remained stable. Your tipping pattern shows consistent support for high-performing creators.
@@ -111,9 +142,9 @@ export function DashboardView({
             Increase meaningful comments and continue supporting top creators to further boost your MemeScore. Consider diversifying your engagement across more creators to maximize growth potential.
           </p>
           <div className="flex justify-end">
-            <button className="text-gray-400 underline">View top creators</button>
+            <Button variant="ghost">View top creators</Button>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

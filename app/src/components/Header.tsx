@@ -2,11 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
+import { WalletConnector } from "./wagmi/WalletConnector";
+import { useCreatorContext } from "@/contexts/CreatorContext";
 
 export function Header() {
   const pathname = usePathname();
   const isLeaderboard = pathname === '/';
   const isDashboard = pathname === '/dashboard';
+
+  // Use the context instead of local query
+  const { user } = useCreatorContext();
 
   return (
     <header className="border-b px-8 py-4">
@@ -38,7 +43,11 @@ export function Header() {
               My Dashboard
             </button>
           </Link>
-          <div className="w-10 h-10 rounded-full bg-gray-300" />
+          <WalletConnector />
+          {user?.profileImageUrl ? 
+            <img className="w-10 h-10 rounded-full" src={user.profileImageUrl} /> : 
+            <div className="w-10 h-10 rounded-full bg-gray-300" />
+          }
         </div>
       </div>
     </header>

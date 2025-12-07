@@ -1,40 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboard } from "@/lib/api";
+import { useQueryEffects } from "@/hooks/useQueryEffects";
+import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { DashboardView } from "./DashboardView";
 
 export default function DashboardPage() {
-  const [creatorIdInput, setCreatorIdInput] = useState("");
+  const { address, isConnected } = useWalletConnection();
 
-  const creatorId = Number(creatorIdInput);
-  const isValidId = !Number.isNaN(creatorId) && creatorId > 0;
+  const query = useQuery({
+    queryKey: ["dashboard", address],
+    queryFn: () => fetchDashboard(address),
+    enabled: isConnected && !!address,
+  });
 
   const {
     data,
     isLoading,
     error,
     refetch,
-  } = useQuery({
-    queryKey: ["dashboard", creatorId],
-    queryFn: () => fetchDashboard(creatorId),
-    enabled: false, // 버튼 클릭 시에만
-  });
-
-  const handleLoad = () => {
-    if (!isValidId) return;
-    refetch();
-  };
+  } = useQueryEffects(query, {});
 
   return (
     <DashboardView
-      creatorIdInput={creatorIdInput}
-      onCreatorIdChange={setCreatorIdInput}
       loading={isLoading}
-      error={error ? (error as Error).message : null}
       data={data ?? null}
-      onLoadDashboard={handleLoad}
     />
   );
 }

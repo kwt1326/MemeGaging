@@ -29,6 +29,7 @@ model creator {
 
   tips_received  tip[]    @relation("creator_tips_received")
   tips_sent      tip[]    @relation("creator_tips_sent")
+  scores         score[]
 }
 
 model tip {
@@ -42,4 +43,31 @@ model tip {
 
   from_creator creator? @relation("creator_tips_sent", fields: [from_creator_id], references: [id])
   to_creator   creator  @relation("creator_tips_received", fields: [to_creator_id], references: [id])
+}
+
+model score {
+  id                Int      @id @default(autoincrement())
+  creator_id        Int      @unique
+  engagement_score  Float    @default(0)
+  view_score        Float    @default(0)
+  follow_score      Float    @default(0)
+  tip_score         Float    @default(0)
+  meme_score        Float    @default(0)
+  
+  // Raw stats used for calculation
+  likes             Int      @default(0)
+  replies           Int      @default(0)
+  reposts           Int      @default(0)
+  quotes            Int      @default(0)
+  views             Int      @default(0)
+  followers         Int      @default(0)
+  tip_count         Int      @default(0)
+  tip_amount        String   @default("0")  // wei 단위
+  
+  created_at        DateTime @default(now())
+  
+  creator           creator  @relation(fields: [creator_id], references: [id])
+  
+  @@index([creator_id, created_at])
+  @@index([meme_score])
 }

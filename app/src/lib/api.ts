@@ -16,36 +16,46 @@ export async function searchCreators(q: string) {
 export async function fetchCreatorDetail(id: string | number) {
   const res = await fetch(`${API_BASE}/creators/${id}`);
   return handle<{
-    creator: any;
+    creator: Creator;
+    user: UserProfile
     stats: { tip_count_7d: number; tip_amount_total_7d: string };
-    recent_tips: any[];
+    score_breakdown: {
+      engagementScore: number;
+      viewScore: number;
+      followScore: number;
+      tipScore: number;
+      memeScore: number;
+    };
+    recent_tips: RecentTips;
   }>(res);
 }
 
 export async function fetchCreatorDetailByAddress(address: string | undefined) {
   const res = await fetch(`${API_BASE}/creators/from-address/${address}`);
-  return handle<{ ok: boolean; creator_id: number; token_address: string }>(res);
+  return handle<{ ok: boolean; creator: Creator; user: UserProfile; }>(res);
 }
 
-export async function fetchRanking(limit = 100) {
+export async function fetchRanking(limit = 20, search = "") {
+  const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
   const res = await fetch(
-    `${API_BASE}/creators/ranking/top?limit=${limit}`,
-    { next: { revalidate: 10 } }
+    `${API_BASE}/creators/ranking/top?limit=${limit}${searchParam}`,
+    { cache: 'no-store' }  // Disable caching to always get fresh data
   );
   return handle<{ creators: Creators }>(res);
 }
 
-export async function fetchDashboard(creatorId: number) {
-  const res = await fetch(`${API_BASE}/dashboard/${creatorId}`);
-  return handle<{
-    me: any;
-    total_contributed_amount: string;
-    tipped_creators: {
-      to_creator_id: number;
-      amount_total: string;
-      creator: any;
-    }[];
-  }>(res);
+
+export async function fetchCreatorScores(creatorId: number, limit = 10) {
+  const res = await fetch(
+    `${API_BASE}/scores/creator/${creatorId}?limit=${limit}`,
+    { cache: 'no-store' }
+  );
+  return handle<{ scores: ScoreRecord[] }>(res);
+}
+
+export async function fetchDashboard(address: `0x${string}` | undefined) {
+  const res = await fetch(`${API_BASE}/dashboard/${address}`);
+  return handle<DashboardData>(res);
 }
 
 export async function walletConnect(payload: {

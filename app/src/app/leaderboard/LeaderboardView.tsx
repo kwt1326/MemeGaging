@@ -1,17 +1,30 @@
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { UserAvatar } from '../../components/UserAvatar';
+import { CreatorName } from '../../components/CreatorName';
+import { Card } from '../../components/Card';
+import { weiToEth } from '@/lib/utils';
 
 type LeaderboardViewProps = {
   creators: Creators;
   loading: boolean;
   error: string | null;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 };
 
 export function LeaderboardView({
   creators,
   loading,
   error,
+  searchQuery,
+  onSearchChange,
 }: LeaderboardViewProps) {
+  const router = useRouter();
+
+  const handleRowClick = (creatorId: number) => {
+    router.push(`/creator/${creatorId}`);
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1400px] mx-auto px-8 py-8">
@@ -19,7 +32,9 @@ export function LeaderboardView({
         <div className="mb-8">
           <input
             type="text"
-            placeholder="Search MemeX user (username#tag)"
+            placeholder="Search by display name"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="w-full max-w-md px-4 py-2 border border-gray-300 rounded"
           />
         </div>
@@ -27,10 +42,8 @@ export function LeaderboardView({
         {/* Title Section */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl">MemeX Mindshare Leaderboard (7D)</h1>
+            <h1 className="text-3xl">MemeX Mindshare Leaderboard</h1>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1 bg-gray-700 text-white rounded">7D</button>
-              <button className="px-3 py-1 bg-white border border-gray-300 rounded">30D</button>
               <span className="ml-4 text-gray-600">Sort by MemeScore</span>
             </div>
           </div>
@@ -40,83 +53,84 @@ export function LeaderboardView({
         </div>
 
         {/* Leaderboard Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <Card padding="none" className="overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-100 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-4 text-left">Rank</th>
                 <th className="px-6 py-4 text-left">User</th>
                 <th className="px-6 py-4 text-left">MemeScore</th>
-                <th className="px-6 py-4 text-left">Engagement(7D)</th>
-                <th className="px-6 py-4 text-left">Views (7D)</th>
-                <th className="px-6 py-4 text-left">Tip (7D)</th>
-                <th className="px-6 py-4 text-left">Actions</th>
+                <th className="px-6 py-4 text-left">Engagement</th>
+                <th className="px-6 py-4 text-left">Followers</th>
+                <th className="px-6 py-4 text-left">Views</th>
+                <th className="px-6 py-4 text-left">Tips</th>
               </tr>
             </thead>
             <tbody>
-              {creators.map((creator) => (
-                <tr key={creator.meme_score} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white">
-                        {creator.meme_score}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <UserAvatar size="sm" />
-                      <div>
-                        <p>
-                          {creator.display_name}{" "}
-                          <span className="text-xs text-muted-foreground">
-                            @{creator.user_name}
-                            {creator.user_name_tag ? `#${creator.user_name_tag}` : ""}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>{creator.meme_score.toLocaleString()}</div>
-                    {/* <div className="text-green-600 text-sm">{creator.memeScoreChange}</div> */}
-                  </td>
-                  <td className="px-6 py-4">
-                    {/* <div>{creator.engagement.toLocaleString()}</div> */}
-                    <div className="text-gray-500 text-sm">likes/shares</div>
-                  </td>
-                  {/* <td className="px-6 py-4">{creator.views}</td>
-                  <td className="px-6 py-4">{creator.tip}</td> */}
-                  <td className="px-6 py-4">{0}</td>
-                  <td className="px-6 py-4">{0}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Link href={`/creator/${creator.id}`}>
-                        <button className="px-4 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50">
-                          Detail
-                        </button>
-                      </Link>
-                      <button className="px-4 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">
-                        7D
-                      </button>
-                    </div>
+              {loading && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                    Loading...
                   </td>
                 </tr>
-              ))}
+              )}
+              {error && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-red-500">
+                    {error}
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && creators.map((creator, i) => {
+                const score = creator.score;
+                const tipAmount = score?.tip_amount ? weiToEth(score.tip_amount) : 0;
+                
+                return (
+                  <tr 
+                    key={creator.id} 
+                    onClick={() => handleRowClick(creator.id)}
+                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white">
+                          {i + 1}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar size="sm" />
+                        <CreatorName
+                          displayName={creator.display_name}
+                          userName={creator.user_name}
+                          userNameTag={creator.user_name_tag}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-semibold">{score?.meme_score?.toFixed(1) || creator.meme_score?.toFixed(1) || '0.0'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">{score?.engagement_score?.toFixed(1) || '0.0'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">{score?.followers?.toLocaleString() || '0'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">{score?.views?.toLocaleString() || '0'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        {score?.tip_count || 0} / {tipAmount.toFixed(4)} M
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button className="px-3 py-1 border border-gray-300 rounded">&lt;</button>
-          <button className="px-3 py-1 bg-gray-700 text-white rounded">1</button>
-          <button className="px-3 py-1 border border-gray-300 rounded">2</button>
-          <button className="px-3 py-1 border border-gray-300 rounded">3</button>
-          <span>...</span>
-          <button className="px-3 py-1 border border-gray-300 rounded">10</button>
-          <button className="px-3 py-1 border border-gray-300 rounded">&gt;</button>
-        </div>
+        </Card>
       </div>
     </div>
   );

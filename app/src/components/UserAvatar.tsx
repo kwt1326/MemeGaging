@@ -3,6 +3,8 @@ interface UserAvatarProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
+const STATIC_USER_AVATAR_URL = 'https://cdn.memex.xyz/memex/insectarium/v1/profileImage/1_c50.png'
+
 export function UserAvatar({ rank, size = 'md' }: UserAvatarProps) {
   const sizeClasses = {
     sm: 'w-10 h-10',
@@ -17,7 +19,7 @@ export function UserAvatar({ rank, size = 'md' }: UserAvatarProps) {
           {rank}
         </div>
       )}
-      <div className={`${sizeClasses[size]} rounded-full bg-gray-300`} />
+      <img className={`${sizeClasses[size]} rounded-full bg-gray-300`} src={STATIC_USER_AVATAR_URL} />
     </div>
   );
 }

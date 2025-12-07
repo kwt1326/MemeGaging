@@ -1,5 +1,5 @@
 import { prisma } from "../prisma";
-import { fetchUserPosts, fetchMyInfo } from "../clients/memexClient";
+import { weiToEth } from "../utils/conversion";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -7,20 +7,56 @@ type Stats7d = {
   likes: number;
   replies: number;
   reposts: number;
+  quotes: number;
   views: number;
   followers: number;
+  tipCount: number;
+  tipAmount: string;
 };
 
-function calcMemeScoreV1(stats: Stats7d): number {
-  const { likes, replies, reposts, views, followers } = stats;
+type ScoreBreakdown = {
+  engagementScore: number;
+  viewScore: number;
+  followScore: number;
+  tipScore: number;
+  memeScore: number;
+};
 
-  const L = Math.log10(1 + likes);
-  const R = Math.log10(1 + replies);
-  const RP = Math.log10(1 + reposts);
-  const V = Math.log10(1 + views);
-  const F = Math.log10(1 + followers);
+/**
+ * 새로운 점수 계산 방법:
+ * - EngagementScore: 좋아요 / 댓글 / 리포스트 / 인용 합산
+ * - ViewScore: 조회수 기반 점수
+ * - FollowScore: 팔로워 수 기반 점수
+ * - TipScore: 온체인 Tip 횟수 / 금액 기반 점수
+ */
+function calcMemeScoreV2(stats: Stats7d): ScoreBreakdown {
+  const { likes, replies, reposts, quotes, views, followers, tipCount, tipAmount } = stats;
 
-  return 2.0 * L + 3.0 * R + 4.0 * RP + 0.5 * V + 1.5 * F;
+  // EngagementScore: 좋아요 / 댓글 / 리포스트 / 인용 합산 (로그 스케일)
+  const totalEngagement = likes + replies + reposts + quotes;
+  const engagementScore = Math.log10(1 + totalEngagement) * 10;
+
+  // ViewScore: 조회수 기반 점수 (로그 스케일)
+  const viewScore = Math.log10(1 + views) * 5;
+
+  // FollowScore: 팔로워 수 기반 점수 (로그 스케일)
+  const followScore = Math.log10(1 + followers) * 8;
+
+  // TipScore: Tip 횟수와 금액 합산 (로그 스케일)
+  // tipAmount는 wei 단위 문자열이므로, ether로 변환
+  const tipAmountEther = weiToEth(tipAmount);
+  const tipScore = Math.log10(1 + tipCount) * 3 + Math.log10(1 + tipAmountEther) * 2;
+
+  // MemeScore = 각 점수의 가중 합산
+  const memeScore = engagementScore + viewScore + followScore + tipScore;
+
+  return {
+    engagementScore: Math.round(engagementScore * 10) / 10,
+    viewScore: Math.round(viewScore * 10) / 10,
+    followScore: Math.round(followScore * 10) / 10,
+    tipScore: Math.round(tipScore * 10) / 10,
+    memeScore: Math.round(memeScore * 10) / 10,
+  };
 }
 
 export async function computeStatsForCreator(creatorId: number): Promise<Stats7d> {
@@ -30,74 +66,67 @@ export async function computeStatsForCreator(creatorId: number): Promise<Stats7d
   const now = Date.now();
   const since = now - SEVEN_DAYS_MS;
 
-  let cursor: string | undefined;
-  let done = false;
+  // Get the latest score record to preserve existing engagement data
+  const latestScore = await prisma.score.findFirst({
+    where: { creator_id: creatorId },
+    orderBy: { created_at: 'desc' },
+  });
 
-  let likes = 0;
-  let replies = 0;
-  let reposts = 0;
-  let views = 0;
+  // Preserve existing engagement data from the latest score
+  let likes = latestScore?.likes || 0;
+  let replies = latestScore?.replies || 0;
+  let reposts = latestScore?.reposts || 0;
+  let quotes = latestScore?.quotes || 0;
+  let views = latestScore?.views || 0;
+  let followers = latestScore?.followers || 0;
 
-  while (!done) {
-    const { contents, nextCursor } = await fetchUserPosts(
-      creator.access_token,
-      creator.user_name,
-      creator.user_name_tag,
-      50,
-      cursor
-    );
+  // Only recompute tips from the database
+  const tips = await prisma.tip.findMany({
+    where: {
+      to_creator_id: creatorId,
+      created_at: {
+        gte: new Date(since),
+      },
+    },
+  });
 
-    for (const post of contents) {
-      const createdAt = new Date(post.createdAt).getTime();
-      if (createdAt < since) {
-        done = true;
-        break;
-      }
-      likes += post.likeCount ?? 0;
-      replies += post.replyCount ?? 0;
-      reposts += post.repostCount ?? 0;
-      views += post.viewCount ?? 0;
-    }
+  const tipCount = tips.length;
+  const tipAmount = tips.reduce((sum, tip) => sum + BigInt(tip.amount.toString()), BigInt(0)).toString();
 
-    if (!nextCursor || contents.length === 0) {
-      break;
-    }
-    cursor = nextCursor;
-  }
-
-  // 팔로워 수는 /user 에서 가져오기
-  const me = await fetchMyInfo(creator.access_token);
-  const followers = me.followers ?? 0;
-
-  return { likes, replies, reposts, views, followers };
+  return { likes, replies, reposts, quotes, views, followers, tipCount, tipAmount };
 }
 
 export async function recomputeMemeScoreForCreator(creatorId: number) {
   const stats = await computeStatsForCreator(creatorId);
-  const memeScore = calcMemeScoreV1(stats);
+  const scoreBreakdown = calcMemeScoreV2(stats);
 
+  // Update creator's meme_score
   await prisma.creator.update({
     where: { id: creatorId },
     data: {
-      meme_score: memeScore,
+      meme_score: scoreBreakdown.memeScore,
     },
   });
 
-  return { stats, memeScore };
-}
-
-// 전체 3000명 대상으로 재계산 (해커톤용 수동 triggering)
-export async function recomputeAllCreatorsMemeScore() {
-  const creators = await prisma.creator.findMany({
-    select: { id: true },
+  // Also save a score record for historical tracking
+  await prisma.score.create({
+    data: {
+      creator_id: creatorId,
+      engagement_score: scoreBreakdown.engagementScore,
+      view_score: scoreBreakdown.viewScore,
+      follow_score: scoreBreakdown.followScore,
+      tip_score: scoreBreakdown.tipScore,
+      meme_score: scoreBreakdown.memeScore,
+      likes: stats.likes,
+      replies: stats.replies,
+      reposts: stats.reposts,
+      quotes: stats.quotes,
+      views: stats.views,
+      followers: stats.followers,
+      tip_count: stats.tipCount,
+      tip_amount: stats.tipAmount,
+    },
   });
 
-  for (const c of creators) {
-    try {
-      await recomputeMemeScoreForCreator(c.id);
-      console.log("updated meme_score for creator", c.id);
-    } catch (err) {
-      console.error("failed to update creator", c.id, err);
-    }
-  }
+  return { stats, ...scoreBreakdown };
 }

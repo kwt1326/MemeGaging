@@ -24,7 +24,6 @@ export default async function RootLayout(props: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Header />
         <Providers initialState={initialState}>{props.children}</Providers>
       </body>
     </html>

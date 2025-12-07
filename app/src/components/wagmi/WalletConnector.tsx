@@ -17,10 +17,14 @@ export function WalletConnector() {
 
   const isConnected = status === 'connected'
 
-  const registerWallet = async (address: string) => {
-    console.log(`register wallet address ${address}`)
-    await walletConnect({ wallet_address: address });
-  }
+  const registerWallet = useCallback(async (address: string) => {
+    try {
+      console.log(`register wallet address ${address}`)
+      await walletConnect({ wallet_address: address });
+    } catch (error) {
+      console.error('Failed to register wallet:', error)
+    }
+  }, [])
 
   const handleClick = useCallback(() => {
     if (isConnected) {
@@ -36,8 +40,13 @@ export function WalletConnector() {
       return
     }
 
-    connect({ connector: injected }, { onSuccess: (data) => registerWallet(data.accounts[0]) })
-  }, [isConnected, disconnect, connect, connectors])
+    connect({ connector: injected }, { 
+      onSuccess: (data) => {
+        // 비동기 처리를 non-blocking으로 실행
+        registerWallet(data.accounts[0])
+      }
+    })
+  }, [isConnected, disconnect, connect, connectors, registerWallet])
 
   let label = 'Connect Wallet'
   if (isConnected && address) {
